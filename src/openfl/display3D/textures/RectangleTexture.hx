@@ -1,6 +1,7 @@
 package openfl.display3D.textures;
 
 #if !flash
+import openfl.utils._internal.UInt16Array;
 import openfl.display._internal.SamplerState;
 import openfl.display.BitmapData;
 import openfl.utils._internal.ArrayBufferView;
@@ -24,9 +25,24 @@ import openfl.utils.ByteArray;
 @:access(openfl.display.Stage)
 @:final class RectangleTexture extends TextureBase
 {
+	var __textureType:String;
+	var __textureTypeGL:Int;
 	@:noCompletion private function new(context:Context3D, width:Int, height:Int, format:String, optimizeForRenderToTexture:Bool)
 	{
 		super(context);
+
+		__textureType = format;
+
+		var gl = __context.gl;
+
+		switch(format) {
+			case 'bgraPacked4444':
+				__textureTypeGL = gl.UNSIGNED_SHORT_4_4_4_4;
+			case 'bgrPacked565':
+				__textureTypeGL = gl.UNSIGNED_SHORT_5_6_5;
+			default:
+				__textureTypeGL = gl.UNSIGNED_BYTE;
+		}
 
 		__width = width;
 		__height = height;
@@ -116,7 +132,12 @@ import openfl.utils.ByteArray;
 		var gl = __context.gl;
 
 		__context.__bindGLTexture2D(__textureID);
-		gl.texImage2D(__textureTarget, 0, __internalFormat, __width, __height, 0, __format, gl.UNSIGNED_BYTE, data);
+		if (__textureTypeGL == gl.UNSIGNED_SHORT_4_4_4_4) {
+			gl.texImage2D(__textureTarget, 0, __internalFormat, __width, __height, 0, __format, __textureTypeGL, data == null ? null : new openfl.utils._internal.UInt16Array(data.buffer));
+		} else {
+			gl.texImage2D(__textureTarget, 0, __internalFormat, __width, __height, 0, __format, __textureTypeGL, data);
+		}
+
 		__context.__bindGLTexture2D(null);
 	}
 
