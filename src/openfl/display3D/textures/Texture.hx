@@ -216,7 +216,7 @@ import openfl.utils.ByteArray;
 		supported.
 		@throws	Error	3768: The Stage3D API may not be used during background execution.
 	**/
-	public function uploadFromByteArray(data:ByteArray, byteArrayOffset:UInt, miplevel:UInt = 0):Void
+	public function uploadFromByteArray(data:ByteArray, byteArrayOffset:UInt, miplevel:UInt = 0, isGenerateMipMaps:Bool = false):Void
 	{
 		#if lime
 		#if (js && !display)
