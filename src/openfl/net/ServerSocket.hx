@@ -23,7 +23,8 @@ import sys.net.Socket;
 	property.
 
 	_OpenFL target support:_ This feature is supported on all desktop operating
-	systems, on iOS, and on Android. This feature is not supported on html5.
+	systems, on iOS, and on Android. This feature is not supported on the html5
+	target or other non-sys targets.
 
 	_Adobe AIR profile support:_ This feature is supported on all desktop
 	operating systems, on iOS (starting with AIR 3.8), and on Android (starting
@@ -50,7 +51,7 @@ import sys.net.Socket;
 	serious network failure occurs). Any data sent over the connection is broken into transmittable
 	packets and reassembled on the other end. All packets are guaranteed to arrive (within reason) —
 	any lost packets are retransmitted. In general, the TCP protocol manages the available network
-	bandwidth better than the UDP protocol. Most AIR applications that require socket communications
+	bandwidth better than the UDP protocol. Most OpenFL applications that require socket communications
 	should use the ServerSocket and Socket classes rather than the DatagramSocket class.
 
 	The ServerSocket class can only be used in targets that support TCP.
@@ -96,8 +97,8 @@ class ServerSocket extends EventDispatcher
 	/**
 		Creates a ServerSocket object.
 
-		@throws  SecurityError This error occurs ff the calling content is running outside the AIR
-				application security sandbox.
+		@throws  SecurityError This error occurs if the calling content is
+				running outside the AIR application security sandbox.
 	**/
 	public function new()
 	{
@@ -129,12 +130,11 @@ class ServerSocket extends EventDispatcher
 							match.
 		@throws RangeError    This error occurs when localPort is less than 0 or greater than 65535.
 		@throws ArgumentError This error occurs when localAddress is not a syntactically well-formed IP address.
-		@throws IOError 	  When the socket cannot be bound, such as when:
-
-							  the underlying network socket (IP and port) is already in bound by another object or process.
-							  the application is running under a user account that does not have the privileges necessary to bind to the port. Privilege issues typically occur when attempting to bind to well known ports (localPort < 1024)
-							  this ServerSocket object is already bound. (Call close() before binding to a different socket.)
-							  when localAddress is not a valid local address.
+		@throws IOError When the socket cannot be bound, such as when:
+				- the underlying network socket (IP and port) is already in bound by another object or process.
+				- the application is running under a user account that does not have the privileges necessary to bind to the port. Privilege issues typically occur when attempting to bind to well known ports (localPort < 1024)
+				- this ServerSocket object is already bound. (Call close() before binding to a different socket.)
+				- when localAddress is not a valid local address.
 	**/
 	public function bind(localPort:Int = 0, localAddress:String = "0.0.0.0"):Void
 	{
@@ -205,8 +205,8 @@ class ServerSocket extends EventDispatcher
 
 		@throws RangeError	There is insufficient data available to read.
 		@throws IOError		This error occurs if the socket is not open or bound.
-							This error also occurs if the call to listen() fails for any
-							other reason.
+					This error also occurs if the call to listen() fails for any
+					other reason.
 	**/
 	public function listen(backlog:Int = 0):Void
 	{
@@ -255,7 +255,7 @@ class ServerSocket extends EventDispatcher
 
 	@:noCompletion private function this_onEnterFrame(e:Event):Void
 	{
-		var sysSocket = null;
+		var sysSocket:sys.net.Socket = null;
 
 		try
 		{

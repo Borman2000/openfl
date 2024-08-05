@@ -1,6 +1,6 @@
 package openfl.display;
 
-#if (!flash && sys)
+#if (!flash && sys && (!flash_doc_gen || air_doc_gen))
 import openfl.Lib;
 import openfl.desktop.NativeApplication;
 import openfl.display.Stage;
@@ -24,7 +24,7 @@ import openfl.geom.Point;
 	`NativeWindow.isSupported` property.
 
 	_OpenFL target support:_ This feature is supported on all desktop operating
-	systems, but is not support on mobile operating systems, including iOS and
+	systems, but is not supported on mobile operating systems, including iOS and
 	Android.
 
 	_Adobe AIR profile support:_ This feature is supported on all desktop
@@ -824,7 +824,7 @@ class NativeWindow extends EventDispatcher
 		are smaller than the new minimum size.
 
 		The `minSize` restriction is enforced for window resizing operations
-		invoked both through ActionScript code and through the operating system.
+		invoked both through Haxe code and through the operating system.
 
 		Note: The width and height of any displayed system chrome may make it
 		impossible to set a window as small as the specified minimum size.

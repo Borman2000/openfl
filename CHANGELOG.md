@@ -1,3 +1,40 @@
+Changelog
+=========
+
+9.3.4 (07/22/2024)
+------------------
+
+* Fixed `close()` method on `Sound` failing to stop `SoundChannel`
+* Fixed memory leak in `TextField` if removed from stage while focused
+* Fixed memory leak in `Stage` when tracking double-click events
+* Fixed memory leak in `Stage` when setting `focus` property to `null`
+* Fixed missing translation of `&apos;` when parsing `htmlText` on `TextField`
+* Fixed missing automatic `stopDrag()` when object is removed from stage after `startDrag()`
+* Fixed missing exception when attempting to add a display object as a child of itself
+* Fixed calculation of `scrollRect` and Stage 3D scissor rect bounds when rendering
+* Fixed `download()` method on `FileReference` when targeting HTML5
+* Fixed `Socket` failing to detect closure from remote host
+* Fixed value of `clickCount` on `MouseEvent`
+* Fixed unspecified behavior from `null` key in `ObjectPool`
+* Fixed many local variable types inferred incorrectly as `Dynamic` instead of something more specific
+
+
+9.3.3 (03/13/2024)
+------------------
+
+* Disabled `useWeakReference` support for `addEventListener()` on cpp target due to incompatibilities (but it is still enabled on html5 target)
+* Fixed possibility of setting `scrollH` and `scrollV` outside of allowed range
+* Fixed vector graphics rendering incorrectly when `scale9Grid` is set, and added `openfl_force_gl_cacheasbitmap_for_scale9grid` define to re-enable the old behavior
+* Fixed socket connect timeout being ignored in some situations
+* Fixed `DeviceRotation` and `Geolocation` classes not found when targeting AIR
+* Fixed crash when using compressed texture with `Tilemap`
+* Fixed crash when highlighting text with ligatures
+* Fixed exception on URL encoding when non-string value passed to `URLVariables`
+* Fixed missing separator between directory and file in result of `File.getDirectoryListingAsync()`
+* Fixed certain classes being exposed to flash target, when they should be available in the air target only
+* Fixed `--macro include("openfl")` when targeting flash or air
+* Fixed compilation of `FileReference` on non-sys desktop targets
+* Fixed `ByteArray` incompatibility with `haxe.io.Bytes`
 
 9.3.2 (11/08/2023)
 ------------------

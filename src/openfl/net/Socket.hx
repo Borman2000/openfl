@@ -44,6 +44,10 @@ import sys.net.Socket as SysSocket;
 
 	A socket transmits and receives data asynchronously.
 
+	_OpenFL target support:_ This feature is supported on all desktop operating
+	systems, on iOS, and on Android. On the html5 target, it uses web sockets
+	instead of raw unix-style sockets.
+
 	On some operating systems, flush() is called automatically between
 	execution frames, but on other operating systems, such as Windows, the
 	data is never sent unless you call `flush()` explicitly. To ensure your
@@ -154,7 +158,7 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 	**/
 	public var connected(get, never):Bool;
 
-	#if sys
+	#if (sys && (!flash_doc_gen || air_doc_gen))
 	/**
 	 * The IP address this socket is bound to on the local machine.
 	**/
@@ -180,7 +184,7 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 	**/
 	public var objectEncoding:ObjectEncoding;
 
-	#if sys
+	#if (sys && (!flash_doc_gen || air_doc_gen))
 	/**
 		The IP address of the remote machine to which this socket is connected.
 
@@ -281,7 +285,7 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 							 server whose policy file doesn't grant the
 							 calling host access to the specified port. For
 							 more information on policy files, see "Website
-							 controls (policy files)" in the _ActionScript 3.0
+							 controls (policy files)" in the _OpenFL
 							 Developer's Guide_ and the Flash Player Developer
 							 Center Topic: <a
 							 href="http://www.adobe.com/go/devnet_security_en"
@@ -364,7 +368,7 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 							 server whose policy file doesn't grant the
 							 calling host access to the specified port. For
 							 more information on policy files, see "Website
-							 controls (policy files)" in the _ActionScript 3.0
+							 controls (policy files)" in the _OpenFL
 							 Developer's Guide_ and the Flash Player Developer
 							 Center Topic: <a
 							 href="http://www.adobe.com/go/devnet_security_en"
@@ -1133,13 +1137,27 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 				if (peer == null)
 				{
 					// not connected yet (hxcpp and hl)
-					return;
+					if (Sys.time() - __timestamp > timeout / 1000)
+					{
+						doClose = true;
+					}
+					else
+					{
+						return;
+					}
 				}
 			}
 			catch (e:Dynamic)
 			{
 				// not connected yet (neko)
-				return;
+				if (Sys.time() - __timestamp > timeout / 1000)
+				{
+					doClose = true;
+				}
+				else
+				{
+					return;
+				}
 			}
 		}
 		else if (connected)
@@ -1162,7 +1180,8 @@ class Socket extends EventDispatcher implements IDataInput implements IDataOutpu
 			}
 			catch (e:Eof)
 			{
-				// ignore
+				// We used to ignore this, but I'm not sure why. There may be an edge case where this causes the socket to prematurely close or become unusable.
+				doClose = true;
 			}
 			catch (e:Error)
 			{
