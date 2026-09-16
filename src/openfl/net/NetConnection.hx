@@ -31,7 +31,7 @@ import openfl.events.NetStatusEvent;
 	object and define the callback methods on that object.
 
 	@event asyncError    Dispatched when an exception is thrown asynchronously
-						 נthat is, from native asynchronous code.
+						 — that is, from native asynchronous code.
 	@event ioError       Dispatched when an input or output error occurs that
 						 causes a network operation to fail.
 	@event netStatus     Dispatched when a NetConnection object is reporting
@@ -448,8 +448,7 @@ class NetConnection extends EventDispatcher
 		these security limitations.
 
 		For more information about security, see the Adobe Flash Player
-		Developer Center: <a href="http://www.adobe.com/go/devnet_security_en"
-		scope="external">Security</a>.
+		Developer Center: [Security](http://www.adobe.com/go/devnet_security_en).
 
 		@param command Use one of the following values for the `command`
 					   parameter:

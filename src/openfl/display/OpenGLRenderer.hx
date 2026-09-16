@@ -70,6 +70,10 @@ class OpenGLRenderer extends DisplayObjectRenderer
 	@SuppressWarnings("checkstyle:Dynamic")
 	public var gl:#if lime WebGLRenderContext #else Dynamic #end;
 
+	@:noCompletion private static var __staticDefaultDisplayShader:DisplayObjectShader;
+	@:noCompletion private static var __staticDefaultGraphicsShader:GraphicsShader;
+	@:noCompletion private static var __staticMaskShader:Context3DMaskShader;
+
 	@:noCompletion private var __context3D:Context3D;
 	@:noCompletion private var __clipRects:Array<Rectangle>;
 	@:noCompletion private var __currentDisplayShader:Shader;
@@ -159,14 +163,18 @@ class OpenGLRenderer extends DisplayObjectRenderer
 		__stencilReference = 0;
 		__tempRect = new Rectangle();
 
-		__defaultDisplayShader = new DisplayObjectShader();
-		__defaultGraphicsShader = new GraphicsShader();
+		if (__staticDefaultDisplayShader == null) __staticDefaultDisplayShader = new DisplayObjectShader();
+		if (__staticDefaultGraphicsShader == null) __staticDefaultGraphicsShader = new GraphicsShader();
+		if (__staticMaskShader == null) __staticMaskShader = new Context3DMaskShader();
+
+		__defaultDisplayShader = __staticDefaultDisplayShader;
+		__defaultGraphicsShader = __staticDefaultGraphicsShader;
 		__defaultShader = __defaultDisplayShader;
 
 		__initShader(__defaultShader);
 
 		__scrollRectMasks = new ObjectPool<Shape>(function() return new Shape());
-		__maskShader = new Context3DMaskShader();
+		__maskShader = __staticMaskShader;
 	}
 
 	/**
@@ -756,6 +764,9 @@ class OpenGLRenderer extends DisplayObjectRenderer
 
 		if (__defaultRenderTarget == null)
 		{
+			#if openfl_dpi_aware
+			__scissorRectangle.setTo(__offsetX, __offsetY, __displayWidth, __displayHeight);
+			#else
 			if (__context3D.__backBufferWantsBestResolution)
 			{
 				__scissorRectangle.setTo(__offsetX / __pixelRatio, __offsetY / __pixelRatio, __displayWidth / __pixelRatio, __displayHeight / __pixelRatio);
@@ -764,6 +775,7 @@ class OpenGLRenderer extends DisplayObjectRenderer
 			{
 				__scissorRectangle.setTo(__offsetX, __offsetY, __displayWidth, __displayHeight);
 			}
+			#end
 			__context3D.setScissorRectangle(__scissorRectangle);
 
 			__upscaled = (__worldTransform.a != 1 || __worldTransform.d != 1);
@@ -823,6 +835,9 @@ class OpenGLRenderer extends DisplayObjectRenderer
 		}
 		else
 		{
+			#if openfl_dpi_aware
+			__scissorRectangle.setTo(__offsetX, __offsetY, __displayWidth, __displayHeight);
+			#else
 			if (__context3D.__backBufferWantsBestResolution)
 			{
 				__scissorRectangle.setTo(__offsetX / __pixelRatio, __offsetY / __pixelRatio, __displayWidth / __pixelRatio, __displayHeight / __pixelRatio);
@@ -831,6 +846,7 @@ class OpenGLRenderer extends DisplayObjectRenderer
 			{
 				__scissorRectangle.setTo(__offsetX, __offsetY, __displayWidth, __displayHeight);
 			}
+			#end
 			__context3D.setScissorRectangle(__scissorRectangle);
 			// __gl.viewport (__offsetX, __offsetY, __displayWidth, __displayHeight);
 
@@ -952,13 +968,10 @@ class OpenGLRenderer extends DisplayObjectRenderer
 		__width = width;
 		__height = height;
 
-		var w = (__defaultRenderTarget == null) ? __stage.stageWidth : __defaultRenderTarget.width;
-		var h = (__defaultRenderTarget == null) ? __stage.stageHeight : __defaultRenderTarget.height;
-
-		__offsetX = __defaultRenderTarget == null ? Math.round(__worldTransform.__transformX(0, 0)) : 0;
-		__offsetY = __defaultRenderTarget == null ? Math.round(__worldTransform.__transformY(0, 0)) : 0;
-		__displayWidth = __defaultRenderTarget == null ? Math.round(__worldTransform.__transformX(w, 0) - __offsetX) : w;
-		__displayHeight = __defaultRenderTarget == null ? Math.round(__worldTransform.__transformY(0, h) - __offsetY) : h;
+		__offsetX = 0;
+		__offsetY = 0;
+		__displayWidth = (__defaultRenderTarget == null) ? width : __defaultRenderTarget.width;
+		__displayHeight = (__defaultRenderTarget == null) ? height : __defaultRenderTarget.height;
 
 		__projection.createOrtho(0, __displayWidth + __offsetX * 2, 0, __displayHeight + __offsetY * 2, -1000, 1000);
 		__projectionFlipped.createOrtho(0, __displayWidth + __offsetX * 2, __displayHeight + __offsetY * 2, 0, -1000, 1000);
@@ -991,17 +1004,18 @@ class OpenGLRenderer extends DisplayObjectRenderer
 	{
 		if (clipRect != null)
 		{
-			var x = Math.floor(clipRect.x);
-			var y = Math.floor(clipRect.y);
-			var width = (clipRect.width > 0 ? Math.ceil(clipRect.right) - x : 0);
-			var height = (clipRect.height > 0 ? Math.ceil(clipRect.bottom) - y : 0);
+			var x = Math.ffloor(clipRect.x);
+			var y = Math.ffloor(clipRect.y);
+			var width = (clipRect.width > 0 ? Math.fceil(clipRect.right) - x : 0);
+			var height = (clipRect.height > 0 ? Math.fceil(clipRect.bottom) - y : 0);
 			#if !openfl_dpi_aware
 			if (__context3D.__backBufferWantsBestResolution)
 			{
-				x = Math.floor(clipRect.x / __pixelRatio);
-				y = Math.floor(clipRect.y / __pixelRatio);
-				width = (clipRect.width > 0 ? Math.ceil(clipRect.right / __pixelRatio) - x : 0);
-				height = (clipRect.height > 0 ? Math.ceil(clipRect.bottom / __pixelRatio) - y : 0);
+				var uv = 1.5 / __pixelRatio;
+				x = clipRect.x / __pixelRatio;
+				y = clipRect.y / __pixelRatio;
+				width = (clipRect.width > 0 ? (clipRect.right / __pixelRatio) - x + uv : 0);
+				height = (clipRect.height > 0 ? (clipRect.bottom / __pixelRatio) - y + uv : 0);
 			}
 			#end
 

@@ -260,12 +260,7 @@ class DisplayObjectContainer extends InteractiveObject
 			child.__setRenderDirty();
 			__setRenderDirty();
 
-			// #if !openfl_disable_event_pooling
-			// var event = Event.__pool.get();
-			// event.type = Event.ADDED;
-			// #else
 			var event = new Event(Event.ADDED);
-			// #end
 			event.bubbles = true;
 
 			event.target = child;
@@ -309,7 +304,7 @@ class DisplayObjectContainer extends InteractiveObject
 
 		The `point` parameter is in the coordinate space of the
 		Stage, which may differ from the coordinate space of the display object
-		container(unless the display object container is the Stage). You can use
+		container (unless the display object container is the Stage). You can use
 		the `globalToLocal()` and the `localToGlobal()`
 		methods to convert points between these coordinate spaces.
 
@@ -420,7 +415,7 @@ class DisplayObjectContainer extends InteractiveObject
 
 	/**
 		Returns an array of objects that lie under the specified point and are
-		children(or grandchildren, and so on) of this DisplayObjectContainer
+		children (or grandchildren, and so on) of this DisplayObjectContainer
 		instance. Any child objects that are inaccessible for security reasons are
 		omitted from the returned array. To determine whether this security
 		restriction affects the returned array, call the
@@ -428,13 +423,13 @@ class DisplayObjectContainer extends InteractiveObject
 
 		The `point` parameter is in the coordinate space of the
 		Stage, which may differ from the coordinate space of the display object
-		container(unless the display object container is the Stage). You can use
+		container (unless the display object container is the Stage). You can use
 		the `globalToLocal()` and the `localToGlobal()`
 		methods to convert points between these coordinate spaces.
 
 		@param point The point under which to look.
 		@return An array of objects that lie under the specified point and are
-				children(or grandchildren, and so on) of this
+				children (or grandchildren, and so on) of this
 				DisplayObjectContainer instance.
 	**/
 	public function getObjectsUnderPoint(point:Point):Array<DisplayObject>
@@ -746,7 +741,10 @@ class DisplayObjectContainer extends InteractiveObject
 
 		for (child in __children)
 		{
-			if (child.__scaleX == 0 || child.__scaleY == 0) continue;
+			// unlike visual bounds, we cannot skip children with zero scale on
+			// just 1 axis. A child with scaleY == 0 may still have width that
+			// we cannot ignore.
+			if (child.__scaleX == 0 && child.__scaleY == 0) continue;
 
 			DisplayObject.__calculateAbsoluteTransform(child.__transform, matrix, childWorldTransform);
 
@@ -876,7 +874,20 @@ class DisplayObjectContainer extends InteractiveObject
 
 				if (hitTest)
 				{
-					stack.insert(length, hitObject);
+					// if interactiveOnly, and the container's
+					// mouseEnabled is false, but mouseEnabled is true
+					// on something inside the container that was hit,
+					// then the container should be added to the stack
+					// because the event will bubble up to it.
+					// however, if the stack is empty at this point,
+					// mouseEnabled was false on all of the hit objects.
+					// since the container's mouseEnabled is also false,
+					// don't add it to the stack because nothing will
+					// bubble up to it.
+					if (!interactiveOnly || mouseEnabled || stack.length > 0)
+					{
+						stack.insert(length, hitObject);
+					}
 					return true;
 				}
 			}

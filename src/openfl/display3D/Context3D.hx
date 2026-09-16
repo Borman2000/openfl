@@ -260,6 +260,7 @@ import lime.math.Vector2;
 	@:noCompletion private static var __glTextureMaxAnisotropy:Int = -1;
 
 	@:noCompletion private var gl:#if lime WebGLRenderContext #else Dynamic #end;
+	@:noCompletion private var __backBufferPixelRatio:Float;
 	@:noCompletion private var __backBufferAntiAlias:Int;
 	@:noCompletion private var __backBufferTexture:RectangleTexture;
 	@:noCompletion private var __backBufferWantsBestResolution:Bool;
@@ -289,6 +290,7 @@ import lime.math.Vector2;
 		__stage = stage;
 		__contextState = contextState;
 		__stage3D = stage3D;
+		__backBufferPixelRatio = 0;
 
 		__context = stage.window.context;
 		#if (js && html5 && dom)
@@ -460,6 +462,12 @@ import lime.math.Vector2;
 	public function clear(red:Float = 0, green:Float = 0, blue:Float = 0, alpha:Float = 1, depth:Float = 1, stencil:UInt = 0,
 			mask:UInt = Context3DClearMask.ALL):Void
 	{
+		__clear(false, red, green, blue, alpha, depth, stencil, mask);
+	}
+
+	@:noCompletion private function __clear(useScissor:Bool, red:Float = 0, green:Float = 0, blue:Float = 0, alpha:Float = 1, depth:Float = 1,
+			stencil:UInt = 0, mask:UInt = Context3DClearMask.ALL)
+	{
 		__flushGLFramebuffer();
 		__flushGLViewport();
 
@@ -519,7 +527,15 @@ import lime.math.Vector2;
 
 		if (clearMask == 0) return;
 
-		__setGLScissorTest(false);
+		if (useScissor)
+		{
+			__flushGLScissor();
+		}
+		else
+		{
+			__setGLScissorTest(false);
+		}
+
 		gl.clear(clearMask);
 	}
 
@@ -579,11 +595,12 @@ import lime.math.Vector2;
 	public function configureBackBuffer(width:Int, height:Int, antiAlias:Int, enableDepthAndStencil:Bool = true, wantsBestResolution:Bool = false,
 			wantsBestResolutionOnBrowserZoom:Bool = false):Void
 	{
+		var pixelRatio = __stage.window.scale;
 		#if !openfl_dpi_aware
 		if (wantsBestResolution)
 		{
-			width = Std.int(width * __stage.window.scale);
-			height = Std.int(height * __stage.window.scale);
+			width = Std.int(width * pixelRatio);
+			height = Std.int(height * pixelRatio);
 		}
 		#end
 
@@ -592,6 +609,7 @@ import lime.math.Vector2;
 			backBufferWidth = width;
 			backBufferHeight = height;
 
+			__backBufferPixelRatio = pixelRatio;
 			__backBufferAntiAlias = antiAlias;
 			__state.backBufferEnableDepthAndStencil = enableDepthAndStencil;
 			__backBufferWantsBestResolution = wantsBestResolution;
@@ -599,7 +617,7 @@ import lime.math.Vector2;
 		}
 		else
 		{
-			if (__backBufferTexture == null || backBufferWidth != width || backBufferHeight != height)
+			if (__backBufferTexture == null || backBufferWidth != width || backBufferHeight != height || __backBufferPixelRatio != pixelRatio)
 			{
 				if (__backBufferTexture != null) __backBufferTexture.dispose();
 				if (__frontBufferTexture != null) __frontBufferTexture.dispose();
@@ -616,11 +634,30 @@ import lime.math.Vector2;
 				var scaledWidth = width;
 				var scaledHeight = height;
 				#else
-				var scaledWidth = wantsBestResolution ? width : Std.int(width * __stage.window.scale);
-				var scaledHeight = wantsBestResolution ? height : Std.int(height * __stage.window.scale);
+				var scaledWidth = wantsBestResolution ? width : Std.int(width * pixelRatio);
+				var scaledHeight = wantsBestResolution ? height : Std.int(height * pixelRatio);
 				#end
 				var vertexData = new Vector<Float>([
-					scaledWidth, scaledHeight, 0, 1, 1, 0, scaledHeight, 0, 0, 1, scaledWidth, 0, 0, 1, 0, 0, 0, 0, 0, 0.0
+					scaledWidth,
+					scaledHeight,
+					0,
+					1,
+					1,
+					0,
+					scaledHeight,
+					0,
+					0,
+					1,
+					scaledWidth,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0.0
 				]);
 
 				__stage3D.__vertexBuffer.uploadFromVector(vertexData, 0, 20);
@@ -638,6 +675,7 @@ import lime.math.Vector2;
 			backBufferWidth = width;
 			backBufferHeight = height;
 
+			__backBufferPixelRatio = pixelRatio;
 			__backBufferAntiAlias = antiAlias;
 			__state.backBufferEnableDepthAndStencil = enableDepthAndStencil;
 			__backBufferWantsBestResolution = wantsBestResolution;
@@ -2329,7 +2367,8 @@ import lime.math.Vector2;
 	@:noCompletion private function __flushGLTextures():Void
 	{
 		var sampler = 0;
-		var texture, samplerState;
+		var texture:TextureBase;
+		var samplerState:SamplerState;
 
 		for (i in 0...__state.textures.length)
 		{
